@@ -1,13 +1,10 @@
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 import express from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
 import mongoose from 'mongoose';
-import { validationResult } from 'express-validator';
 
-import { registerValidation} from './middlewares/auth.js'
-
-import UserModel from './models/User.js'
+import { registerValidation} from './middlewares/auth.js';
+import checkAuth from './middlewares/checkAuth.js';
+import * as UserController from './controllers/UserController.js';
 
 dotenv.config()
 
@@ -20,82 +17,9 @@ const app = express();
 
 app.use(express.json());
 
-app.post('/auth/login', async (req, res) => {
-  try {
-    const user = await UserModel.findOne({ email: req.body.email });
-    if (!user) {
-      return req.status(404).json({
-        message: 'Неверный логин или пароль'
-      })
-    }
-
-    const isValidPass = await bcrypt.compare(req.body.password, user._doc.passwordHash);
-
-    if (!isValidPass) {
-      return res.status(400).json({
-        message: 'Неверный логин или пароль'
-      })
-    }
-
-    const token = jwt.sign({
-      _id: user._id,
-    }, process.env.JWT_SECRET, {
-      expiresIn: '30d',
-    })
-
-    const { passwordHash, ... userData } = user._doc;
-
-    res.json({
-      ... userData,
-      token
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: 'Ошибка авторизации',
-    })
-  }
-});
-
-app.post('/auth/register', registerValidation, async (req, res) => {
-  try {
-    const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json(errors.array());
-  }
-  
-  const passsword = req.body.password;
-  const salt = await bcrypt.genSalt(10);
-  const hash = await bcrypt.hash(passsword, salt);
-
-  const doc = new UserModel({
-    email: req.body.email,
-    fullName: req.body.fullName,
-    avatarUrl: req.body.avatarUrl,
-    passwordHash: hash,
-  });
-
-  const user = await doc.save();
-
-  const token = jwt.sign({
-    _id: user._id,
-  }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
-  })
-
-  const { passwordHash, ... userData } = user._doc;
-
-  res.json({
-    ... userData,
-    token
-  });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: 'Ошибка регистрации',
-    })
-  }
-})
+app.post('/auth/login', UserController.login);
+app.post('/auth/register', registerValidation, UserController.register);
+app.get('/auth/me', checkAuth, UserController.getMe)
 
 app.listen(4444, (err) => {
   if (err) {
