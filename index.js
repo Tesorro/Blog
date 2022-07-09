@@ -1,9 +1,12 @@
+import dotenv from 'dotenv'
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 
+dotenv.config()
+
 mongoose
-  .connect('mongodb+srv://collisiac:wwwwww@cluster0.qtxnzox.mongodb.net/?retryWrites=true&w=majority')
+  .connect(process.env.MONGO_CONNECT)
   .then(() => console.log('DB ok'))
   .catch((err) => console.log('DB error', err))
 
@@ -21,7 +24,7 @@ app.post('/auth/login', (req, res) => {
   const token = jwt.sign({
     email: req.body.email,
     fullName: "John Doe",
-  }, 'secretKey123');
+  }, process.env.JWT_SECRET);
 
   res.json({
     success: true,
