@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-
+import ReactMarkDown from "react-markdown";
 import { Post } from "../components/Post";
 import { Index } from "../components/AddComment";
 import { CommentsBlock } from "../components/CommentsBlock";
@@ -37,7 +37,7 @@ export const FullPost = () => {
       <Post
         id={data.id}
         title={data.title}
-        imageUrl={data.imageUrl}
+        imageUrl={data.imageUrl ? `http://localhost:4444${data.imageUrl}` : ''}
         // imageUrl="https://res.cloudinary.com/practicaldev/image/fetch/s--UnAfrEG8--/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/icohm5g0axh9wjmu4oc3.png"
         user={data.user}
         createdAt={data.createdAt}
@@ -46,7 +46,7 @@ export const FullPost = () => {
         tags={data.tags}
         isFullPost
       >
-        <p>{data.text}</p>
+        <ReactMarkDown children={data.text} />
       </Post>
       <CommentsBlock
         items={[
